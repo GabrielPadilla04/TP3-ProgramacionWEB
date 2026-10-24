@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Backend/">
+    <Project Path="Backend/TP3_API/TP3_API.csproj" />
+  </Folder>
+  <Folder Name="/Frontend/">
+    <Project Path="Frontend/TP3_Blazor/TP3_Blazor.csproj" />
+  </Folder>
+</Solution>
