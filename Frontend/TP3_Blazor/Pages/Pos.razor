@@ -1,0 +1,218 @@
+﻿@page "/pos"
+@attribute [Authorize]
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>Punto de Venta - POS</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- SECCIÓN IZQUIERDA: Catálogo de Productos -->
+        <div class="col-md-8">
+            <h3 class="mb-3">Catálogo de Productos</h3>
+
+            @if (!string.IsNullOrEmpty(mensajeError))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @mensajeError
+                    <button type="button" class="btn-close" @onclick="() => mensajeError = string.Empty"></button>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(mensajeExito))
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @mensajeExito
+                    <button type="button" class="btn-close" @onclick="() => mensajeExito = string.Empty"></button>
+                </div>
+            }
+
+            @if (products == null)
+            {
+                <p><em>Cargando productos...</em></p>
+            }
+            else if (!products.Any())
+            {
+                <div class="alert alert-info">No hay productos disponibles en este momento.</div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var product in products)
+                    {
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">@product.Nombre</h5>
+                                    <p class="card-text text-muted mb-1">Precio: $@product.PrecioVenta</p>
+                                    <p class="card-text small">Stock: @product.StockActual</p>
+                                    <button class="btn btn-outline-primary mt-auto" @onclick="() => AddToCart(product)">
+                                        Agregar al Carrito
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- SECCIÓN DERECHA: Carrito de Compras / Ticket -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Carrito Actual</h4>
+
+                    @if (!cart.Any())
+                    {
+                        <p class="text-muted">El carrito está vacío.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group mb-3">
+                            @foreach (var item in cart)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="my-0">@item.Product.Nombre</h6>
+                                        <small class="text-muted">Cant: @item.Quantity x $@item.Product.PrecioVenta</small>
+                                    </div>
+                                    <span class="text-muted">$@(item.Product.PrecioVenta * item.Quantity)</span>
+                                    <button class="btn btn-sm btn-danger ms-2" @onclick="() => RemoveFromCart(item)">X</button>
+                                </li>
+                            }
+                        </ul>
+
+                        <div class="d-flex justify-content-between mb-3">
+                            <strong>Total:</strong>
+                            <strong>$@cart.Sum(i => i.Product.PrecioVenta * i.Quantity)</strong>
+                        </div>
+
+                        <button class="btn btn-success w-100" @onclick="Checkout">
+                            Completar Venta
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ProductModel>? products;
+    private List<CartItem> cart = new();
+    private string mensajeExito = string.Empty;
+    private string mensajeError = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarProductos();
+    }
+
+    private async Task CargarProductos()
+    {
+        try
+        {
+            // CORREGIDO: Se cambia "api/Products" por "api/Productos"
+            products = await Http.GetFromJsonAsync<List<ProductModel>>("api/Productos");
+        }
+        catch (Exception ex)
+        {
+            mensajeError = "No se pudieron cargar los productos desde la API.";
+        }
+    }
+
+    private void AddToCart(ProductModel product)
+    {
+        mensajeExito = string.Empty;
+        mensajeError = string.Empty;
+
+        var existingItem = cart.FirstOrDefault(i => i.Product.Id == product.Id);
+        if (existingItem != null)
+        {
+            if (existingItem.Quantity < product.StockActual)
+            {
+                existingItem.Quantity++;
+            }
+            else
+            {
+                mensajeError = "No hay suficiente stock disponible para agregar más unidades.";
+            }
+        }
+        else
+        {
+            if (product.StockActual > 0)
+            {
+                cart.Add(new CartItem { Product = product, Quantity = 1 });
+            }
+            else
+            {
+                mensajeError = "El producto se encuentra sin stock.";
+            }
+        }
+    }
+
+    private void RemoveFromCart(CartItem item)
+    {
+        if (item.Quantity > 1)
+        {
+            item.Quantity--;
+        }
+        else
+        {
+            cart.Remove(item);
+        }
+    }
+    private async Task Checkout()
+    {
+        mensajeExito = string.Empty;
+        mensajeError = string.Empty;
+
+        if (!cart.Any()) return;
+
+        try
+        {
+            var ventaDto = new
+            {
+                Fecha = DateTime.Now,
+                Detalles = cart.Select(c => new
+                {
+                    ProductoId = c.Product.Id,
+                    Cantidad = c.Quantity
+                }).ToList()
+            };
+
+            var response = await Http.PostAsJsonAsync("api/Ventas", ventaDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                mensajeExito = "¡Venta completada con éxito y stock actualizado!";
+                cart.Clear();
+                await CargarProductos();
+            }
+            else
+            {
+                mensajeError = "Ocurrió un error al procesar la venta en la API.";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error de conexión con la API: {ex.Message}";
+        }
+    }
+
+    public class ProductModel
+    {
+        public int Id { get; set; }
+        public string CodigoBarras { get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
+        public decimal PrecioVenta { get; set; }
+        public int StockActual { get; set; }
+    }
+
+    public class CartItem
+    {
+        public ProductModel Product { get; set; } = new();
+        public int Quantity { get; set; }
+    }
+}
