@@ -9,7 +9,7 @@ namespace TP3_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Administrador")] // REQUISITO CLAVE: Solo Administrador
+    [Authorize(Roles = "Administrador")]
     public class EntradasMercaderiaController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -22,7 +22,6 @@ namespace TP3_API.Controllers
         [HttpPost]
         public async Task<IActionResult> RegistrarEntrada([FromBody] EntradaMercaderiaDto dto)
         {
-            // Obtener el ID del Admin logueado desde el Token JWT
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdClaim == null) return Unauthorized();
             int adminId = int.Parse(userIdClaim);
@@ -37,14 +36,22 @@ namespace TP3_API.Controllers
                     UsuarioId = adminId
                 };
 
-                decimal totalEntrada = 0;
                 foreach (var item in dto.Detalles)
                 {
                     var producto = await _context.Productos.FindAsync(item.ProductoId);
                     if (producto == null) return BadRequest($"Producto con ID {item.ProductoId} no encontrado.");
 
-                    // Actualizar Stock Actual de mercadería
+                    // Actualizar Stock Actual, Costo y Precio de Venta
                     producto.StockActual += item.Cantidad;
+                    producto.PrecioCosto = item.CostoUnitario;
+
+                    if (item.NuevoPrecioVenta > 0)
+                    {
+                        producto.PrecioVenta = item.NuevoPrecioVenta;
+                    }
+
+                    // Forzar a EF Core a registrar la modificación en la base de datos
+                    _context.Entry(producto).State = EntityState.Modified;
 
                     entrada.Detalles.Add(new EntradaMercaderiaDetalle
                     {
@@ -58,7 +65,7 @@ namespace TP3_API.Controllers
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return Ok(new { mensaje = "Entrada de mercadería registrada y stock actualizado correctamente." });
+                return Ok(new { mensaje = "Entrada de mercadería registrada, stock y precios actualizados correctamente." });
             }
             catch (Exception ex)
             {
@@ -68,7 +75,6 @@ namespace TP3_API.Controllers
         }
     }
 
-    // DTOs auxiliares para la petición
     public class EntradaMercaderiaDto
     {
         public string Proveedor { get; set; } = string.Empty;
@@ -80,5 +86,6 @@ namespace TP3_API.Controllers
         public int ProductoId { get; set; }
         public int Cantidad { get; set; }
         public decimal CostoUnitario { get; set; }
+        public decimal NuevoPrecioVenta { get; set; }
     }
 }
