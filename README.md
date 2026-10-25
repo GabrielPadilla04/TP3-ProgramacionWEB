@@ -27,6 +27,7 @@ Paso 2: Configurar la Base de Datos MariaDB.
 Creá una base de datos vacía llamada exactamente tp3_puntoventa_db, entrá a la carpeta del backend (TP3_API) y buscá el archivo de configuración appsettings.json.
 
 Asegurate de que la cadena de conexión (ConexionDB) apunte correctamente a tu servidor local de MariaDB con tu usuario y contraseña configurados anteriormente:
+
 Paso 3: Aplicar las Migraciones (Entity Framework Core)
 
 Para crear automáticamente todas las tablas normalizadas en tu base de datos ubícate en la terminal dentro de la carpeta del proyecto backend y corre
@@ -53,6 +54,7 @@ cd ../TP3_Blazor
 Ejecutar la aplicación frontend:
 dotnet run
 Y felicitaciones! ya puedes navegar por el sistema
+
 
 ## 🚀 Stack Tecnológico
 * **Backend:** ASP.NET Core 9 Web API, Entity Framework Core.
