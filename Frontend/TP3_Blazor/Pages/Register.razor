@@ -1,0 +1,95 @@
+﻿@page "/register"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>Registro de Usuario - POS</PageTitle>
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">Crear Cuenta</h3>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @errorMessage
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <div class="alert alert-success" role="alert">
+                        @successMessage
+                    </div>
+                }
+
+                <EditForm Model="registerModel" OnValidSubmit="HandleRegister">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-3">
+                        <label for="nombreUsuario" class="form-label">Nombre de Usuario</label>
+                        <InputText id="nombreUsuario" class="form-control" @bind-Value="registerModel.NombreUsuario" placeholder="Tu nombre de usuario" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Correo Electrónico</label>
+                        <InputText id="email" class="form-control" @bind-Value="registerModel.Email" placeholder="correo@ejemplo.com" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <InputText id="password" type="password" class="form-control" @bind-Value="registerModel.Password" placeholder="••••••••" />
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 mb-3">Registrarse</button>
+
+                    <div class="text-center">
+                        <small>¿Ya tenés una cuenta? <a href="login">Iniciá sesión aquí</a></small>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterModel registerModel = new();
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private async Task HandleRegister()
+    {
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/Auth/register", registerModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "¡Registro exitoso! Redirigiendo al login...";
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                // Captura el mensaje exacto que devuelva el backend (ej: si el email ya está registrado)
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"No se pudo completar el registro: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error de conexión con la API: {ex.Message}";
+        }
+    }
+
+    public class RegisterModel
+    {
+        public string NombreUsuario { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

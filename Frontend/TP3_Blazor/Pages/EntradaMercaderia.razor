@@ -1,0 +1,274 @@
+﻿@page "/ingreso-mercaderia"
+@attribute [Authorize(Roles = "Administrador")]
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Ingreso de Mercadería - Administración</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- SECCIÓN IZQUIERDA: Formulario de Carga -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="card-title m-0">Registrar Entrada de Mercadería</h3>
+                        <button class="btn btn-outline-danger btn-sm" @onclick="DescargarPdfStock">
+                            <span class="bi bi-file-earmark-pdf-fill"></span> Reporte PDF
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(mensajeError))
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @mensajeError
+                            <button type="button" class="btn-close" @onclick="() => mensajeError = string.Empty"></button>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(mensajeExito))
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @mensajeExito
+                            <button type="button" class="btn-close" @onclick="() => mensajeExito = string.Empty"></button>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label">Proveedor:</label>
+                        <input type="text" class="form-control" @bind="proveedor" placeholder="Ej: Distribuidora Mayorista S.A." />
+                    </div>
+
+                    <hr />
+
+                    <h5 class="mb-3">Agregar Producto</h5>
+
+                    <div class="mb-3">
+                        <label class="form-label">Seleccionar Producto:</label>
+                        <select class="form-select" @bind="selectedProductoId">
+                            <option value="0">-- Seleccione un producto --</option>
+                            @if (productos != null)
+                            {
+                                @foreach (var p in productos)
+                                {
+                                    <option value="@p.Id">@p.Nombre (Stock actual: @p.StockActual)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Cantidad a ingresar:</label>
+                        <input type="number" class="form-control" @bind="cantidad" min="1" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Costo Unitario ($):</label>
+                        <input type="number" step="0.01" class="form-control" @bind="costoUnitario" min="0" />
+                    </div>
+
+                    <button class="btn btn-primary w-100" @onclick="AgregarItemAlDetalle">
+                        Agregar al Listado de Ingreso
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DERECHA: Resumen de la Entrada -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Detalle de la Operación</h4>
+
+                    @if (!detalles.Any())
+                    {
+                        <p class="text-muted">No hay productos agregados en este ingreso.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group mb-3">
+                            @foreach (var item in detalles)
+                            {
+                                var prod = productos?.FirstOrDefault(p => p.Id == item.ProductoId);
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="my-0">@(prod?.Nombre ?? "Producto")</h6>
+                                        <small class="text-muted">Cant: @item.Cantidad | Costo: $@item.CostoUnitario</small>
+                                    </div>
+                                    <span class="text-muted">$@(item.Cantidad * item.CostoUnitario)</span>
+                                    <button class="btn btn-sm btn-danger ms-2" @onclick="() => detalles.Remove(item)">X</button>
+                                </li>
+                            }
+                        </ul>
+
+                        <div class="d-flex justify-content-between mb-3">
+                            <strong>Total Inversión:</strong>
+                            <strong>$@detalles.Sum(i => i.Cantidad * i.CostoUnitario)</strong>
+                        </div>
+
+                        <button class="btn btn-success w-100" @onclick="RegistrarEntradaMercaderia">
+                            Confirmar Ingreso de Stock
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ProductoModel>? productos;
+    private string proveedor = string.Empty;
+    private int selectedProductoId;
+    private int cantidad = 1;
+    private decimal costoUnitario = 0;
+
+    private List<EntradaDetalleDto> detalles = new();
+
+    private string mensajeExito = string.Empty;
+    private string mensajeError = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarProductos();
+    }
+
+    private async Task CargarProductos()
+    {
+        try
+        {
+            productos = await Http.GetFromJsonAsync<List<ProductoModel>>("api/Productos");
+        }
+        catch (Exception ex)
+        {
+            mensajeError = "No se pudieron cargar los productos desde la API.";
+        }
+    }
+
+    private void AgregarItemAlDetalle()
+    {
+        mensajeError = string.Empty;
+        mensajeExito = string.Empty;
+
+        if (selectedProductoId == 0)
+        {
+            mensajeError = "Debes seleccionar un producto válido.";
+            return;
+        }
+
+        if (cantidad <= 0)
+        {
+            mensajeError = "La cantidad a ingresar debe ser mayor a 0.";
+            return;
+        }
+
+        if (costoUnitario < 0)
+        {
+            mensajeError = "El costo unitario no puede ser negativo.";
+            return;
+        }
+
+        var existente = detalles.FirstOrDefault(d => d.ProductoId == selectedProductoId);
+        if (existente != null)
+        {
+            existente.Cantidad += cantidad;
+            existente.CostoUnitario = costoUnitario;
+        }
+        else
+        {
+            detalles.Add(new EntradaDetalleDto
+            {
+                ProductoId = selectedProductoId,
+                Cantidad = cantidad,
+                CostoUnitario = costoUnitario
+            });
+        }
+
+        selectedProductoId = 0;
+        cantidad = 1;
+        costoUnitario = 0;
+    }
+
+    private async Task RegistrarEntradaMercaderia()
+    {
+        mensajeError = string.Empty;
+        mensajeExito = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(proveedor))
+        {
+            mensajeError = "El campo 'Proveedor' es obligatorio.";
+            return;
+        }
+
+        if (!detalles.Any())
+        {
+            mensajeError = "El listado de entrada está vacío.";
+            return;
+        }
+
+        try
+        {
+            var dto = new
+            {
+                Proveedor = proveedor,
+                Detalles = detalles
+            };
+
+            var response = await Http.PostAsJsonAsync("api/EntradasMercaderia", dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                mensajeExito = "¡Entrada de mercadería registrada y stock actualizado correctamente!";
+                proveedor = string.Empty;
+                detalles.Clear();
+                await CargarProductos();
+            }
+            else
+            {
+                mensajeError = "Ocurrió un error al registrar la entrada en la API.";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error de conexión con la API: {ex.Message}";
+        }
+    }
+
+    private async Task DescargarPdfStock()
+    {
+        try
+        {
+            var response = await Http.GetAsync("api/Reportes/stock-pdf");
+            if (response.IsSuccessStatusCode)
+            {
+                var pdfBytes = await response.Content.ReadAsByteArrayAsync();
+                var fileName = $"Reporte_Stock_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                var base64 = Convert.ToBase64String(pdfBytes);
+                await JS.InvokeVoidAsync("downloadFileFromByteArray", base64, "application/pdf", fileName);
+            }
+            else
+            {
+                mensajeError = "No se pudo generar el reporte PDF desde la API.";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al descargar el PDF: {ex.Message}";
+        }
+    }
+
+    public class ProductoModel
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public int StockActual { get; set; }
+    }
+
+    public class EntradaDetalleDto
+    {
+        public int ProductoId { get; set; }
+        public int Cantidad { get; set; }
+        public decimal CostoUnitario { get; set; }
+    }
+}

@@ -1,6 +1,39 @@
-﻿<Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-</Router>
+﻿<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)">
+                <NotAuthorized>
+                    @if (!context.User.Identity?.IsAuthenticated ?? true)
+                    {
+                        <div class="container mt-5 text-center">
+                            <div class="alert alert-warning" role="alert">
+                                <h4>Acceso Restringido</h4>
+                                <p>Debes iniciar sesión para poder acceder a esta sección.</p>
+                                <a href="login" class="btn btn-primary mt-2">Ir al Login</a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="container mt-5">
+                            <div class="alert alert-danger" role="alert">
+                                <h4>Acceso Denegado</h4>
+                                <p>No tenés los permisos necesarios (roles) para ver esta página.</p>
+                            </div>
+                        </div>
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>No encontrado</PageTitle>
+            <LayoutView Layout="@typeof(Layout.MainLayout)">
+                <div class="container mt-5 text-center">
+                    <h3>Página no encontrada</h3>
+                    <p>La dirección a la que intentás ingresar no existe.</p>
+                </div>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

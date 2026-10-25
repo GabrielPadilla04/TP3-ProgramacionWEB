@@ -1,0 +1,118 @@
+﻿@page "/entradas-stock"
+@attribute [Authorize(Roles = "Admin")] // Protegido para que solo el Admin pueda ingresar mercadería
+@inject HttpClient Http
+
+<PageTitle>Ingreso de Mercadería</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">Registrar Entrada de Mercadería</h3>
+
+                    @if (!string.IsNullOrEmpty(mensajeExito))
+                    {
+                        <div class="alert alert-success">@mensajeExito</div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(mensajeError))
+                    {
+                        <div class="alert alert-danger">@mensajeError</div>
+                    }
+
+                    <EditForm Model="entradaModel" OnValidSubmit="RegistrarEntrada">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label class="form-label">Seleccionar Producto</label>
+                            <InputSelect class="form-select" @bind-Value="entradaModel.ProductoId">
+                                <option value="0">-- Seleccione un producto --</option>
+                                @if (products != null)
+                                {
+                                    @foreach (var p in products)
+                                    {
+                                        <option value="@p.Id">@p.Name (Stock actual: @p.Stock)</option>
+                                    }
+                                }
+                            </InputSelect>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Cantidad a Ingresar</label>
+                            <InputNumber class="form-control" @bind-Value="entradaModel.Cantidad" />
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">Guardar Entrada</button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private EntradaStockModel entradaModel = new();
+    private List<ProductModel>? products;
+    private string mensajeExito = string.Empty;
+    private string mensajeError = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            products = await Http.GetFromJsonAsync<List<ProductModel>>("api/Products");
+        }
+        catch (Exception ex)
+        {
+            mensajeError = "No se pudo cargar el listado de productos.";
+        }
+    }
+
+    private async Task RegistrarEntrada()
+    {
+        mensajeExito = string.Empty;
+        mensajeError = string.Empty;
+
+        if (entradaModel.ProductoId == 0 || entradaModel.Cantidad <= 0)
+        {
+            mensajeError = "Por favor, seleccione un producto válido y una cantidad mayor a cero.";
+            return;
+        }
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/EntradasStock", entradaModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                mensajeExito = "¡Entrada de mercadería registrada correctamente y stock actualizado!";
+                entradaModel = new(); // Limpiar formulario
+                // Recargar productos para refrescar el stock visualizado
+                products = await Http.GetFromJsonAsync<List<ProductModel>>("api/Products");
+            }
+            else
+            {
+                mensajeError = "Error al registrar la entrada en el servidor.";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error de conexión: {ex.Message}";
+        }
+    }
+
+    public class EntradaStockModel
+    {
+        public int ProductoId { get; set; }
+        public int Cantidad { get; set; }
+    }
+
+    public class ProductModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public int Stock { get; set; }
+    }
+}
