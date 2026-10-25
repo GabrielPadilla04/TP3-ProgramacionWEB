@@ -6,7 +6,7 @@ Sistema Integral de Punto de Venta (POS) desarrollado con **ASP.NET Core Web API
 
 ## 👥 Integrantes del Equipo
 * **Gabriel Padilla**
-* **Valentin**
+* **Valentin Montes**
 
 ---
 Paso a Paso para Ejecutar el Sistema
