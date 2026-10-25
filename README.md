@@ -16,6 +16,7 @@ Antes de comenzar, asegúrate de tener instalado en tu computadora:
 MariaDB corriendo localmente o en un servidor accesible.
 Visual Studio 2022 o Visual Studio Code con la extensión de C#.
 Un gestor de bases de datos.
+
 Paso 1 Clonar el repositorio y cambiar a la rama 
 
 git clone https://github.com/GabrielPadilla04/TP3-ProgramacionWEB
@@ -31,8 +32,10 @@ Paso 3: Aplicar las Migraciones (Entity Framework Core)
 Para crear automáticamente todas las tablas normalizadas en tu base de datos ubícate en la terminal dentro de la carpeta del proyecto backend y corre
 
 cd TP3_API
+
 Ejecuta el comando de Entity Framework y actualiza/crea la base de datos:
 dotnet ef database update
+
 Paso 4: Ejecutar el Backend (ASP.NET Web API)
 
 Desde la misma carpeta TP3_API, ejecuta el servidor de la API:
@@ -70,6 +73,6 @@ Y felicitaciones! ya puedes navegar por el sistema
 
 —
 
-Diagrama ER
+## Diagrama ER
 
 <img width="5397" height="6725" alt="Inventory Sales Management System-2026-10-25-234951" src="https://github.com/user-attachments/assets/9b7e45f3-1da9-4d95-b35c-77f5974e5b66" />
