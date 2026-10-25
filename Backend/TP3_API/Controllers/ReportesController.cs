@@ -39,24 +39,26 @@ namespace TP3_API.Controllers
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4);
-                    page.Margin(40); // Margen en puntos (seguro y compatible)
+                    page.Margin(35);
                     page.PageColor(Colors.White);
-                    page.DefaultTextStyle(x => x.FontSize(10));
+                    page.DefaultTextStyle(x => x.FontSize(9));
 
+                    // --- ENCABEZADO ---
                     page.Header().Row(row =>
                     {
                         row.RelativeItem().Column(col =>
                         {
-                            col.Item().Text("SISTEMA POS - REPORTE GENERAL DEL NEGOCIO").Bold().FontSize(16).FontColor(Colors.Blue.Darken2);
-                            col.Item().Text($"Fecha de emisión: {DateTime.Now:dd/MM/yyyy HH:mm}").FontSize(9).FontColor(Colors.Grey.Darken1);
+                            col.Item().Text("SISTEMA POS - REPORTE GENERAL DEL NEGOCIO").Bold().FontSize(14).FontColor(Colors.Blue.Darken2);
+                            col.Item().Text($"Fecha de emisión: {DateTime.Now:dd/MM/yyyy HH:mm}").FontSize(8).FontColor(Colors.Grey.Medium);
                         });
                     });
 
-                    page.Content().PaddingVertical(20).Column(col =>
+                    // --- CONTENIDO ---
+                    page.Content().PaddingVertical(15).Column(col =>
                     {
-                        // --- SECCIÓN 1: STOCK ACTUAL ---
-                        col.Item().Text("1. Estado Actual de Stock").Bold().FontSize(12).FontColor(Colors.Blue.Medium);
-                        col.Item().PaddingBottom(10);
+                        // 1. ESTADO ACTUAL DE STOCK
+                        col.Item().Text("1. Estado Actual de Stock").Bold().FontSize(11).FontColor(Colors.Blue.Medium);
+                        col.Item().PaddingBottom(5);
 
                         col.Item().Table(table =>
                         {
@@ -70,26 +72,26 @@ namespace TP3_API.Controllers
 
                             table.Header(header =>
                             {
-                                header.Cell().Background(Colors.Blue.Lighten4).Padding(3).Text("ID").Bold();
-                                header.Cell().Background(Colors.Blue.Lighten4).Padding(3).Text("Producto").Bold();
-                                header.Cell().Background(Colors.Blue.Lighten4).Padding(3).Text("Stock").Bold();
-                                header.Cell().Background(Colors.Blue.Lighten4).Padding(3).Text("Precio").Bold();
+                                header.Cell().Background(Colors.Blue.Lighten4).Padding(4).Text("ID").Bold();
+                                header.Cell().Background(Colors.Blue.Lighten4).Padding(4).Text("Producto").Bold();
+                                header.Cell().Background(Colors.Blue.Lighten4).Padding(4).Text("Stock").Bold();
+                                header.Cell().Background(Colors.Blue.Lighten4).Padding(4).Text("Precio").Bold();
                             });
 
                             foreach (var p in productos)
                             {
-                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(p.Id.ToString());
-                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(p.Nombre);
-                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(p.StockActual.ToString());
-                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"${p.PrecioVenta:N2}");
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(p.Id.ToString());
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(p.Nombre);
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(p.StockActual.ToString());
+                                table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text($"${p.PrecioVenta:N2}");
                             }
                         });
 
                         col.Item().PaddingBottom(20);
 
-                        // --- SECCIÓN 2: ENTRADAS DE MERCADERÍA ---
-                        col.Item().Text("2. Historial de Entradas de Mercadería").Bold().FontSize(12).FontColor(Colors.Green.Medium);
-                        col.Item().PaddingBottom(10);
+                        // 2. HISTORIAL DE ENTRADAS DE MERCADERÍA
+                        col.Item().Text("2. Historial de Entradas de Mercadería").Bold().FontSize(11).FontColor(Colors.Green.Medium);
+                        col.Item().PaddingBottom(5);
 
                         if (!entradas.Any())
                         {
@@ -97,22 +99,41 @@ namespace TP3_API.Controllers
                         }
                         else
                         {
-                            foreach (var ent in entradas)
+                            col.Item().Table(table =>
                             {
-                                col.Item().Background(Colors.Grey.Lighten3).Padding(4).Text($"Entrada #{ent.Id} - Proveedor: {ent.Proveedor} ({ent.Fecha:dd/MM/yyyy})").Bold().FontSize(9);
-                                foreach (var det in ent.Detalles)
+                                table.ColumnsDefinition(columns =>
                                 {
-                                    col.Item().PaddingLeft(10).Text($"- {det.Producto?.Nombre}: {det.Cantidad} unidades (Costo U: ${det.CostoUnitario:N2})");
+                                    columns.ConstantColumn(30);
+                                    columns.RelativeColumn(1.2f);
+                                    columns.RelativeColumn(2.5f);
+                                    columns.RelativeColumn(3f);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background(Colors.Green.Lighten4).Padding(4).Text("ID").Bold();
+                                    header.Cell().Background(Colors.Green.Lighten4).Padding(4).Text("Fecha").Bold();
+                                    header.Cell().Background(Colors.Green.Lighten4).Padding(4).Text("Proveedor").Bold();
+                                    header.Cell().Background(Colors.Green.Lighten4).Padding(4).Text("Productos Ingresados").Bold();
+                                });
+
+                                foreach (var ent in entradas)
+                                {
+                                    string detalleItems = string.Join(", ", ent.Detalles.Select(d => $"{d.Cantidad}x {d.Producto?.Nombre ?? "Prod."}"));
+
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(ent.Id.ToString());
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(ent.Fecha.ToString("dd/MM/yyyy"));
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(ent.Proveedor);
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(detalleItems);
                                 }
-                                col.Item().PaddingBottom(5);
-                            }
+                            });
                         }
 
                         col.Item().PaddingBottom(20);
 
-                        // --- SECCIÓN 3: VENTAS ---
-                        col.Item().Text("3. Historial de Ventas").Bold().FontSize(12).FontColor(Colors.Orange.Medium);
-                        col.Item().PaddingBottom(10);
+                        // 3. HISTORIAL DE VENTAS
+                        col.Item().Text("3. Historial de Ventas").Bold().FontSize(11).FontColor(Colors.Orange.Medium);
+                        col.Item().PaddingBottom(5);
 
                         if (!ventas.Any())
                         {
@@ -120,18 +141,38 @@ namespace TP3_API.Controllers
                         }
                         else
                         {
-                            foreach (var v in ventas)
+                            col.Item().Table(table =>
                             {
-                                col.Item().Background(Colors.Grey.Lighten3).Padding(4).Text($"Venta #{v.Id} - Fecha: {v.Fecha:dd/MM/yyyy} - Total: ${v.Total:N2}").Bold().FontSize(9);
-                                foreach (var det in v.Detalles)
+                                table.ColumnsDefinition(columns =>
                                 {
-                                    col.Item().PaddingLeft(10).Text($"- {det.Producto?.Nombre}: {det.Cantidad} un. x ${det.PrecioUnitario:N2}");
+                                    columns.ConstantColumn(30);
+                                    columns.RelativeColumn(1.5f);
+                                    columns.RelativeColumn(3f);
+                                    columns.RelativeColumn(1.2f);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell().Background(Colors.Orange.Lighten4).Padding(4).Text("ID").Bold();
+                                    header.Cell().Background(Colors.Orange.Lighten4).Padding(4).Text("Fecha").Bold();
+                                    header.Cell().Background(Colors.Orange.Lighten4).Padding(4).Text("Detalle de Artículos").Bold();
+                                    header.Cell().Background(Colors.Orange.Lighten4).Padding(4).Text("Total").Bold();
+                                });
+
+                                foreach (var v in ventas)
+                                {
+                                    string detalleVenta = string.Join(", ", v.Detalles.Select(d => $"{d.Cantidad}x {d.Producto?.Nombre ?? "Prod."}"));
+
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(v.Id.ToString());
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(v.Fecha.ToString("dd/MM/yyyy HH:mm"));
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(detalleVenta);
+                                    table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text($"${v.Total:N2}");
                                 }
-                                col.Item().PaddingBottom(5);
-                            }
+                            });
                         }
                     });
 
+                    // --- PIE DE PÁGINA ---
                     page.Footer().AlignCenter().Text(x =>
                     {
                         x.Span("Página ");

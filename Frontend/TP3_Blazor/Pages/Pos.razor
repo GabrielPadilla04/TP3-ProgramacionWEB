@@ -1,5 +1,4 @@
 ﻿@page "/pos"
-@attribute [Authorize]
 @inject HttpClient Http
 @inject NavigationManager Navigation
 
@@ -31,14 +30,14 @@
             {
                 <p><em>Cargando productos...</em></p>
             }
-            else if (!products.Any())
+            else if (!products.Where(p => p.StockActual > 0).Any())
             {
                 <div class="alert alert-info">No hay productos disponibles en este momento.</div>
             }
             else
             {
                 <div class="row">
-                    @foreach (var product in products)
+                    @foreach (var product in products.Where(p => p.StockActual > 0))
                     {
                         <div class="col-md-4 mb-3">
                             <div class="card h-100 shadow-sm">
@@ -88,9 +87,20 @@
                             <strong>$@cart.Sum(i => i.Product.PrecioVenta * i.Quantity)</strong>
                         </div>
 
-                        <button class="btn btn-success w-100" @onclick="Checkout">
-                            Completar Venta
-                        </button>
+                        <!-- PROTECCIÓN CONDICIONAL: Permite navegar el POS pero restringe la compra si no está logueado -->
+                        <AuthorizeView>
+                            <Authorized>
+                                <button class="btn btn-success w-100" @onclick="Checkout">
+                                    Completar Venta
+                                </button>
+                            </Authorized>
+                            <NotAuthorized>
+                                <div class="alert alert-warning text-center mb-0 p-2">
+                                    <p class="small mb-2">🔒 Debes iniciar sesión para poder completar la venta.</p>
+                                    <a href="login" class="btn btn-primary btn-sm w-100">Ir a Iniciar Sesión</a>
+                                </div>
+                            </NotAuthorized>
+                        </AuthorizeView>
                     }
                 </div>
             </div>
@@ -113,7 +123,6 @@
     {
         try
         {
-            // CORREGIDO: Se cambia "api/Products" por "api/Productos"
             products = await Http.GetFromJsonAsync<List<ProductModel>>("api/Productos");
         }
         catch (Exception ex)
@@ -163,6 +172,7 @@
             cart.Remove(item);
         }
     }
+
     private async Task Checkout()
     {
         mensajeExito = string.Empty;

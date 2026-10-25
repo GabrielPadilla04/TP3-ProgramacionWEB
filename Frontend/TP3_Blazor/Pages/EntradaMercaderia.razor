@@ -2,20 +2,19 @@
 @attribute [Authorize(Roles = "Administrador")]
 @inject HttpClient Http
 @inject NavigationManager Navigation
-@inject IJSRuntime JS
 
 <PageTitle>Ingreso de Mercadería - Administración</PageTitle>
 
 <div class="container-fluid mt-4">
     <div class="row">
-        <!-- SECCIÓN IZQUIERDA: Formulario de Carga -->
+        <!-- SECCIÓN IZQUIERDA: Formulario de Carga y Creación -->
         <div class="col-md-6">
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h3 class="card-title m-0">Registrar Entrada de Mercadería</h3>
-                        <button class="btn btn-outline-danger btn-sm" @onclick="DescargarPdfStock">
-                            <span class="bi bi-file-earmark-pdf-fill"></span> Reporte PDF
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="ToggleModoNuevoProducto">
+                            @(mostrarFormNuevoProducto ? "← Volver a Selección" : "+ Crear Producto Nuevo")
                         </button>
                     </div>
 
@@ -42,35 +41,84 @@
 
                     <hr />
 
-                    <h5 class="mb-3">Agregar Producto</h5>
+                    @if (!mostrarFormNuevoProducto)
+                    {
+                        <!-- MODO SELECCIÓN DE PRODUCTO EXISTENTE -->
+                        <h5 class="mb-3">Agregar Producto al Ingreso</h5>
 
-                    <div class="mb-3">
-                        <label class="form-label">Seleccionar Producto:</label>
-                        <select class="form-select" @bind="selectedProductoId">
-                            <option value="0">-- Seleccione un producto --</option>
-                            @if (productos != null)
-                            {
-                                @foreach (var p in productos)
+                        <div class="mb-3">
+                            <label class="form-label">Seleccionar Producto:</label>
+                            <select class="form-select" @onchange="OnProductoSeleccionado">
+                                <option value="0">-- Seleccione un producto --</option>
+                                @if (productos != null)
                                 {
-                                    <option value="@p.Id">@p.Nombre (Stock actual: @p.StockActual)</option>
+                                    @foreach (var p in productos)
+                                    {
+                                        <option value="@p.Id" selected="@(p.Id == selectedProductoId)">
+                                            @p.Nombre (Stock: @p.StockActual | Venta: $@p.PrecioVenta)
+                                        </option>
+                                    }
                                 }
-                            }
-                        </select>
-                    </div>
+                            </select>
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Cantidad a ingresar:</label>
-                        <input type="number" class="form-control" @bind="cantidad" min="1" />
-                    </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cantidad a ingresar:</label>
+                            <input type="number" class="form-control" @bind="cantidad" min="1" />
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Costo Unitario ($):</label>
-                        <input type="number" step="0.01" class="form-control" @bind="costoUnitario" min="0" />
-                    </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Costo Unitario ($):</label>
+                                <input type="number" step="0.01" class="form-control" @bind="costoUnitario" min="0" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nuevo Precio Venta ($):</label>
+                                <input type="number" step="0.01" class="form-control" @bind="nuevoPrecioVentaItem" min="0" />
+                            </div>
+                        </div>
 
-                    <button class="btn btn-primary w-100" @onclick="AgregarItemAlDetalle">
-                        Agregar al Listado de Ingreso
-                    </button>
+                        <button class="btn btn-primary w-100" @onclick="AgregarItemAlDetalle">
+                            Agregar al Listado de Ingreso
+                        </button>
+                    }
+                    else
+                    {
+                        <!-- MODO CREAR PRODUCTO NUEVO AL VUELO -->
+                        <div class="p-3 border rounded bg-light mb-3">
+                            <h5 class="text-primary mb-3">Nuevo Producto en el Catálogo</h5>
+
+                            <div class="mb-2">
+                                <label class="form-label small">Código de Barras:</label>
+                                <input type="text" class="form-control form-control-sm" @bind="nuevoCodigoBarras" placeholder="Ej: 779..." />
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label small">Nombre del Producto:</label>
+                                <input type="text" class="form-control form-control-sm" @bind="nuevoNombre" placeholder="Ej: Gaseosa Lima 2L" />
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label small">Precio de Costo ($):</label>
+                                    <input type="number" step="0.01" class="form-control form-control-sm" @bind="nuevoPrecioCosto" />
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label small">Precio de Venta ($):</label>
+                                    <input type="number" step="0.01" class="form-control form-control-sm" @bind="nuevoPrecioVenta" />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small">Stock Mínimo:</label>
+                                <input type="number" class="form-control form-control-sm" @bind="nuevoStockMinimo" />
+                            </div>
+
+                            <button class="btn btn-success btn-sm w-100" @onclick="CrearYSeleccionarNuevoProducto">
+                                Guardar y Agregar al Ingreso
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -94,7 +142,7 @@
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="my-0">@(prod?.Nombre ?? "Producto")</h6>
-                                        <small class="text-muted">Cant: @item.Cantidad | Costo: $@item.CostoUnitario</small>
+                                        <small class="text-muted">Cant: @item.Cantidad | Costo: $@item.CostoUnitario | Nuevo Venta: $@item.NuevoPrecioVenta</small>
                                     </div>
                                     <span class="text-muted">$@(item.Cantidad * item.CostoUnitario)</span>
                                     <button class="btn btn-sm btn-danger ms-2" @onclick="() => detalles.Remove(item)">X</button>
@@ -123,6 +171,14 @@
     private int selectedProductoId;
     private int cantidad = 1;
     private decimal costoUnitario = 0;
+    private decimal nuevoPrecioVentaItem = 0;
+
+    private bool mostrarFormNuevoProducto = false;
+    private string nuevoCodigoBarras = string.Empty;
+    private string nuevoNombre = string.Empty;
+    private decimal nuevoPrecioCosto = 0;
+    private decimal nuevoPrecioVenta = 0;
+    private int nuevoStockMinimo = 5;
 
     private List<EntradaDetalleDto> detalles = new();
 
@@ -140,9 +196,85 @@
         {
             productos = await Http.GetFromJsonAsync<List<ProductoModel>>("api/Productos");
         }
-        catch (Exception ex)
+        catch
         {
             mensajeError = "No se pudieron cargar los productos desde la API.";
+        }
+    }
+
+    private void OnProductoSeleccionado(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            selectedProductoId = id;
+            var prod = productos?.FirstOrDefault(p => p.Id == id);
+            if (prod != null)
+            {
+                costoUnitario = prod.PrecioCosto;
+                nuevoPrecioVentaItem = prod.PrecioVenta;
+            }
+        }
+    }
+
+    private void ToggleModoNuevoProducto()
+    {
+        mostrarFormNuevoProducto = !mostrarFormNuevoProducto;
+        mensajeError = string.Empty;
+        mensajeExito = string.Empty;
+    }
+
+    private async Task CrearYSeleccionarNuevoProducto()
+    {
+        mensajeError = string.Empty;
+        mensajeExito = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(nuevoNombre) || string.IsNullOrWhiteSpace(nuevoCodigoBarras))
+        {
+            mensajeError = "El nombre y el código de barras son obligatorios para el nuevo producto.";
+            return;
+        }
+
+        try
+        {
+            var nuevoProdDto = new
+            {
+                CodigoBarras = nuevoCodigoBarras,
+                Nombre = nuevoNombre,
+                PrecioCosto = nuevoPrecioCosto,
+                PrecioVenta = nuevoPrecioVenta,
+                StockActual = 0,
+                StockMinimo = nuevoStockMinimo
+            };
+
+            var response = await Http.PostAsJsonAsync("api/Productos", nuevoProdDto);
+            if (response.IsSuccessStatusCode)
+            {
+                var productoCreado = await response.Content.ReadFromJsonAsync<ProductoModel>();
+                await CargarProductos();
+
+                if (productoCreado != null)
+                {
+                    selectedProductoId = productoCreado.Id;
+                    costoUnitario = nuevoPrecioCosto;
+                    nuevoPrecioVentaItem = nuevoPrecioVenta;
+                }
+
+                mostrarFormNuevoProducto = false;
+                nuevoCodigoBarras = string.Empty;
+                nuevoNombre = string.Empty;
+                nuevoPrecioCosto = 0;
+                nuevoPrecioVenta = 0;
+
+                mensajeExito = "¡Producto creado con éxito! Ya puedes asignarle cantidad y agregarlo.";
+            }
+            else
+            {
+                mensajeError = "No se pudo registrar el nuevo producto en la API.";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al crear producto: {ex.Message}";
         }
     }
 
@@ -163,9 +295,9 @@
             return;
         }
 
-        if (costoUnitario < 0)
+        if (costoUnitario < 0 || nuevoPrecioVentaItem < 0)
         {
-            mensajeError = "El costo unitario no puede ser negativo.";
+            mensajeError = "Los costos y precios no pueden ser negativos.";
             return;
         }
 
@@ -174,6 +306,7 @@
         {
             existente.Cantidad += cantidad;
             existente.CostoUnitario = costoUnitario;
+            existente.NuevoPrecioVenta = nuevoPrecioVentaItem;
         }
         else
         {
@@ -181,13 +314,15 @@
             {
                 ProductoId = selectedProductoId,
                 Cantidad = cantidad,
-                CostoUnitario = costoUnitario
+                CostoUnitario = costoUnitario,
+                NuevoPrecioVenta = nuevoPrecioVentaItem
             });
         }
 
         selectedProductoId = 0;
         cantidad = 1;
         costoUnitario = 0;
+        nuevoPrecioVentaItem = 0;
     }
 
     private async Task RegistrarEntradaMercaderia()
@@ -235,33 +370,13 @@
         }
     }
 
-    private async Task DescargarPdfStock()
-    {
-        try
-        {
-            var response = await Http.GetAsync("api/Reportes/stock-pdf");
-            if (response.IsSuccessStatusCode)
-            {
-                var pdfBytes = await response.Content.ReadAsByteArrayAsync();
-                var fileName = $"Reporte_Stock_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
-                var base64 = Convert.ToBase64String(pdfBytes);
-                await JS.InvokeVoidAsync("downloadFileFromByteArray", base64, "application/pdf", fileName);
-            }
-            else
-            {
-                mensajeError = "No se pudo generar el reporte PDF desde la API.";
-            }
-        }
-        catch (Exception ex)
-        {
-            mensajeError = $"Error al descargar el PDF: {ex.Message}";
-        }
-    }
-
     public class ProductoModel
     {
         public int Id { get; set; }
+        public string CodigoBarras { get; set; } = string.Empty;
         public string Nombre { get; set; } = string.Empty;
+        public decimal PrecioCosto { get; set; }
+        public decimal PrecioVenta { get; set; }
         public int StockActual { get; set; }
     }
 
@@ -270,5 +385,6 @@
         public int ProductoId { get; set; }
         public int Cantidad { get; set; }
         public decimal CostoUnitario { get; set; }
+        public decimal NuevoPrecioVenta { get; set; }
     }
 }
