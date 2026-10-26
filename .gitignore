@@ -19,3 +19,5 @@ logs/
 
 publish/
 dist/
+
+appsettings.Production.json
