@@ -5,6 +5,7 @@ using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using TP3_Blazor.Services;
 using TP3_Blazor.Providers;
+using MudBlazor.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -24,5 +25,6 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStateProvider>();
 builder.Services.AddScoped<ApiAuthenticationStateProvider>(); // <-- Esta línea asegura el casting correcto en el AuthService
+builder.Services.AddMudServices();
 
 await builder.Build().RunAsync();

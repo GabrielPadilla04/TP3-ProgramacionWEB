@@ -4,54 +4,70 @@
 
 <PageTitle>Registro de Usuario - POS</PageTitle>
 
-<div class="row justify-content-center mt-5">
-    <div class="col-md-5">
-        <div class="card shadow">
-            <div class="card-body">
-                <h3 class="card-title text-center mb-4">Crear Cuenta</h3>
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-12">
+    <MudCard Elevation="4" Class="pa-4">
+        <MudCardContent>
+            <MudStack AlignItems="AlignItems.Center" Class="mb-6">
+                <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Color="Color.Primary" Size="Size.Large" />
+                <MudText Typo="Typo.h4" Color="Color.Primary">Crear Cuenta</MudText>
+            </MudStack>
 
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="alert alert-danger" role="alert">
-                        @errorMessage
-                    </div>
-                }
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <MudAlert Severity="Severity.Error" ShowCloseIcon="true" CloseIconClicked="() => errorMessage = string.Empty" Class="mb-4">
+                    @errorMessage
+                </MudAlert>
+            }
 
-                @if (!string.IsNullOrEmpty(successMessage))
-                {
-                    <div class="alert alert-success" role="alert">
-                        @successMessage
-                    </div>
-                }
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <MudAlert Severity="Severity.Success" ShowCloseIcon="true" CloseIconClicked="() => successMessage = string.Empty" Class="mb-4">
+                    @successMessage
+                </MudAlert>
+            }
 
-                <EditForm Model="registerModel" OnValidSubmit="HandleRegister">
-                    <DataAnnotationsValidator />
+            <EditForm Model="registerModel" OnValidSubmit="HandleRegister">
+                <DataAnnotationsValidator />
 
-                    <div class="mb-3">
-                        <label for="nombreUsuario" class="form-label">Nombre de Usuario</label>
-                        <InputText id="nombreUsuario" class="form-control" @bind-Value="registerModel.NombreUsuario" placeholder="Tu nombre de usuario" />
-                    </div>
+                <MudTextField @bind-Value="registerModel.NombreUsuario"
+                              For="@(() => registerModel.NombreUsuario)"
+                              Label="Nombre de Usuario"
+                              Placeholder="Tu nombre de usuario"
+                              Variant="Variant.Outlined"
+                              Class="mb-4" />
 
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Correo Electrónico</label>
-                        <InputText id="email" class="form-control" @bind-Value="registerModel.Email" placeholder="correo@ejemplo.com" />
-                    </div>
+                <MudTextField @bind-Value="registerModel.Email"
+                              For="@(() => registerModel.Email)"
+                              Label="Correo Electrónico"
+                              Placeholder="correo@ejemplo.com"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Email"
+                              Class="mb-4" />
 
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Contraseña</label>
-                        <InputText id="password" type="password" class="form-control" @bind-Value="registerModel.Password" placeholder="••••••••" />
-                    </div>
+                <MudTextField @bind-Value="registerModel.Password"
+                              For="@(() => registerModel.Password)"
+                              Label="Contraseña"
+                              Placeholder="••••••••"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Password"
+                              Class="mb-6" />
 
-                    <button type="submit" class="btn btn-success w-100 mb-3">Registrarse</button>
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Success"
+                           Size="Size.Large"
+                           FullWidth="true"
+                           Class="mb-4">
+                    Registrarse
+                </MudButton>
 
-                    <div class="text-center">
-                        <small>¿Ya tenés una cuenta? <a href="login">Iniciá sesión aquí</a></small>
-                    </div>
-                </EditForm>
-            </div>
-        </div>
-    </div>
-</div>
+                <MudText Typo="Typo.body2" Align="Align.Center">
+                    ¿Ya tenés una cuenta? <MudLink Href="login" Color="Color.Primary">Iniciá sesión aquí</MudLink>
+                </MudText>
+            </EditForm>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
 
 @code {
     private RegisterModel registerModel = new();

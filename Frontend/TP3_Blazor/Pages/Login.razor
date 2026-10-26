@@ -2,38 +2,54 @@
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
 
-<div class="row justify-content-center mt-5">
-    <div class="col-md-4">
-        <div class="card shadow">
-            <div class="card-body">
-                <h3 class="card-title text-center mb-4">Iniciar Sesión - POS</h3>
+<PageTitle>Iniciar Sesión - POS</PageTitle>
 
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="alert alert-danger" role="alert">
-                        @errorMessage
-                    </div>
-                }
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-12">
+    <MudCard Elevation="4" Class="pa-4">
+        <MudCardContent>
+            <MudStack AlignItems="AlignItems.Center" Class="mb-6">
+                <MudIcon Icon="@Icons.Material.Filled.PointOfSale" Color="Color.Primary" Size="Size.Large" />
+                <MudText Typo="Typo.h4" Color="Color.Primary">Iniciar Sesión</MudText>
+                <MudText Typo="Typo.subtitle1" Color="Color.Default">Punto de Venta</MudText>
+            </MudStack>
 
-                <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
-                    <DataAnnotationsValidator />
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <MudAlert Severity="Severity.Error" ShowCloseIcon="true" CloseIconClicked="() => errorMessage = string.Empty" Class="mb-4">
+                    @errorMessage
+                </MudAlert>
+            }
 
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Correo Electrónico</label>
-                        <InputText id="email" class="form-control" @bind-Value="loginModel.Email" placeholder="correo@ejemplo.com" />
-                    </div>
+            <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
 
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Contraseña</label>
-                        <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" placeholder="••••••••" />
-                    </div>
+                <MudTextField @bind-Value="loginModel.Email"
+                              For="@(() => loginModel.Email)"
+                              Label="Correo Electrónico"
+                              Placeholder="correo@ejemplo.com"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Email"
+                              Class="mb-4" />
 
-                    <button type="submit" class="p-2 btn btn-primary w-100">Ingresar</button>
-                </EditForm>
-            </div>
-        </div>
-    </div>
-</div>
+                <MudTextField @bind-Value="loginModel.Password"
+                              For="@(() => loginModel.Password)"
+                              Label="Contraseña"
+                              Placeholder="••••••••"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Password"
+                              Class="mb-6" />
+
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           FullWidth="true">
+                    Ingresar
+                </MudButton>
+            </EditForm>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
 
 @code {
     private LoginModel loginModel = new();

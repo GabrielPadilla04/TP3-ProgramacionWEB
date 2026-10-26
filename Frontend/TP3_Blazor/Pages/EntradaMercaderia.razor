@@ -5,168 +5,152 @@
 
 <PageTitle>Ingreso de Mercadería - Administración</PageTitle>
 
-<div class="container-fluid mt-4">
-    <div class="row">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudGrid>
         <!-- SECCIÓN IZQUIERDA: Formulario de Carga y Creación -->
-        <div class="col-md-6">
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h3 class="card-title m-0">Registrar Entrada de Mercadería</h3>
-                        <button class="btn btn-outline-secondary btn-sm" @onclick="ToggleModoNuevoProducto">
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="3" Class="mb-4">
+                <MudCardContent>
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                        <MudText Typo="Typo.h5">Registrar Entrada de Mercadería</MudText>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="ToggleModoNuevoProducto">
                             @(mostrarFormNuevoProducto ? "← Volver a Selección" : "+ Crear Producto Nuevo")
-                        </button>
-                    </div>
+                        </MudButton>
+                    </MudStack>
 
                     @if (!string.IsNullOrEmpty(mensajeError))
                     {
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <MudAlert Severity="Severity.Error" ShowCloseIcon="true" CloseIconClicked="() => mensajeError = string.Empty" Class="mb-3">
                             @mensajeError
-                            <button type="button" class="btn-close" @onclick="() => mensajeError = string.Empty"></button>
-                        </div>
+                        </MudAlert>
                     }
 
                     @if (!string.IsNullOrEmpty(mensajeExito))
                     {
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <MudAlert Severity="Severity.Success" ShowCloseIcon="true" CloseIconClicked="() => mensajeExito = string.Empty" Class="mb-3">
                             @mensajeExito
-                            <button type="button" class="btn-close" @onclick="() => mensajeExito = string.Empty"></button>
-                        </div>
+                        </MudAlert>
                     }
 
-                    <div class="mb-3">
-                        <label class="form-label">Proveedor:</label>
-                        <input type="text" class="form-control" @bind="proveedor" placeholder="Ej: Distribuidora Mayorista S.A." />
-                    </div>
+                    <MudTextField @bind-Value="proveedor" Label="Proveedor" Placeholder="Ej: Distribuidora Mayorista S.A." Variant="Variant.Outlined" Class="mb-3" />
 
-                    <hr />
+                    <MudDivider Class="my-4" />
 
                     @if (!mostrarFormNuevoProducto)
                     {
-                        <!-- MODO SELECCIÓN DE PRODUCTO EXISTENTE -->
-                        <h5 class="mb-3">Agregar Producto al Ingreso</h5>
+                        <!-- MODO SELECCIÓN CON AUTOCOMPLETADO -->
+                        <MudText Typo="Typo.h6" Class="mb-3">Agregar Producto al Ingreso</MudText>
 
-                        <div class="mb-3">
-                            <label class="form-label">Seleccionar Producto:</label>
-                            <select class="form-select" @onchange="OnProductoSeleccionado">
-                                <option value="0">-- Seleccione un producto --</option>
-                                @if (productos != null)
-                                {
-                                    @foreach (var p in productos)
-                                    {
-                                        <option value="@p.Id" selected="@(p.Id == selectedProductoId)">
-                                            @p.Nombre (Stock: @p.StockActual | Venta: $@p.PrecioVenta)
-                                        </option>
-                                    }
-                                }
-                            </select>
-                        </div>
+                        <MudAutocomplete T="ProductoModel" 
+                                         Label="Buscar Producto (Nombre o Código)" 
+                                         SearchFunc="BuscarProductosEnApi" 
+                                         ToStringFunc="@(p => p == null ? null : $"{p.Nombre} (Stock: {p.StockActual} | Venta: ${p.PrecioVenta})")"
+                                         ValueChanged="OnProductoSeleccionado" 
+                                         Variant="Variant.Outlined" 
+                                         Class="mb-3"
+                                         Placeholder="Escribe para buscar..."
+                                         ResetValueOnEmptyText="true" 
+                                         CoerceText="true" 
+                                         CoerceValue="false" />
 
-                        <div class="mb-3">
-                            <label class="form-label">Cantidad a ingresar:</label>
-                            <input type="number" class="form-control" @bind="cantidad" min="1" />
-                        </div>
+                        <MudNumericField @bind-Value="cantidad" Label="Cantidad a ingresar" Min="1" Variant="Variant.Outlined" Class="mb-3" />
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Costo Unitario ($):</label>
-                                <input type="number" step="0.01" class="form-control" @bind="costoUnitario" min="0" />
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Nuevo Precio Venta ($):</label>
-                                <input type="number" step="0.01" class="form-control" @bind="nuevoPrecioVentaItem" min="0" />
-                            </div>
-                        </div>
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField @bind-Value="costoUnitario" Label="Costo Unitario ($)" Min="0" Step="0.01M" Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField @bind-Value="nuevoPrecioVentaItem" Label="Nuevo Precio Venta ($)" Min="0" Step="0.01M" Variant="Variant.Outlined" />
+                            </MudItem>
+                        </MudGrid>
 
-                        <button class="btn btn-primary w-100" @onclick="AgregarItemAlDetalle">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-4" OnClick="AgregarItemAlDetalle">
                             Agregar al Listado de Ingreso
-                        </button>
+                        </MudButton>
                     }
                     else
                     {
                         <!-- MODO CREAR PRODUCTO NUEVO AL VUELO -->
-                        <div class="p-3 border rounded bg-light mb-3">
-                            <h5 class="text-primary mb-3">Nuevo Producto en el Catálogo</h5>
+                        <MudPaper Class="pa-4" Elevation="0" Outlined="true" Style="background-color: var(--mud-palette-background-grey);">
+                            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-3">Nuevo Producto en el Catálogo</MudText>
 
-                            <div class="mb-2">
-                                <label class="form-label small">Código de Barras:</label>
-                                <input type="text" class="form-control form-control-sm" @bind="nuevoCodigoBarras" placeholder="Ej: 779..." />
-                            </div>
+                            <MudTextField @bind-Value="nuevoCodigoBarras" Label="Código de Barras" Placeholder="Ej: 779..." Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-2" />
+                            
+                            <MudTextField @bind-Value="nuevoNombre" Label="Nombre del Producto" Placeholder="Ej: Gaseosa Lima 2L" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-2" />
 
-                            <div class="mb-2">
-                                <label class="form-label small">Nombre del Producto:</label>
-                                <input type="text" class="form-control form-control-sm" @bind="nuevoNombre" placeholder="Ej: Gaseosa Lima 2L" />
-                            </div>
+                            <MudGrid>
+                                <MudItem xs="12" sm="6">
+                                    <MudNumericField @bind-Value="nuevoPrecioCosto" Label="Precio de Costo ($)" Step="0.01M" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudNumericField @bind-Value="nuevoPrecioVenta" Label="Precio de Venta ($)" Step="0.01M" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                </MudItem>
+                            </MudGrid>
 
-                            <div class="row">
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label small">Precio de Costo ($):</label>
-                                    <input type="number" step="0.01" class="form-control form-control-sm" @bind="nuevoPrecioCosto" />
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label small">Precio de Venta ($):</label>
-                                    <input type="number" step="0.01" class="form-control form-control-sm" @bind="nuevoPrecioVenta" />
-                                </div>
-                            </div>
+                            <MudNumericField @bind-Value="nuevoStockMinimo" Label="Stock Mínimo" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mt-2 mb-3" />
 
-                            <div class="mb-3">
-                                <label class="form-label small">Stock Mínimo:</label>
-                                <input type="number" class="form-control form-control-sm" @bind="nuevoStockMinimo" />
-                            </div>
-
-                            <button class="btn btn-success btn-sm w-100" @onclick="CrearYSeleccionarNuevoProducto">
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" Size="Size.Small" OnClick="CrearYSeleccionarNuevoProducto">
                                 Guardar y Agregar al Ingreso
-                            </button>
-                        </div>
+                            </MudButton>
+                        </MudPaper>
                     }
-                </div>
-            </div>
-        </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
         <!-- SECCIÓN DERECHA: Resumen de la Entrada -->
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h4 class="card-title mb-3">Detalle de la Operación</h4>
+        <MudItem xs="12" md="6">
+            <MudCard Elevation="3">
+                <MudCardContent>
+                    <MudText Typo="Typo.h5" Class="mb-4">Detalle de la Operación</MudText>
 
                     @if (!detalles.Any())
                     {
-                        <p class="text-muted">No hay productos agregados en este ingreso.</p>
+                        <MudText Color="Color.Default">No hay productos agregados en este ingreso.</MudText>
                     }
                     else
                     {
-                        <ul class="list-group mb-3">
+                        <MudList T="EntradaDetalleDto" Class="mb-3">
                             @foreach (var item in detalles)
                             {
-                                var prod = productos?.FirstOrDefault(p => p.Id == item.ProductoId);
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="my-0">@(prod?.Nombre ?? "Producto")</h6>
-                                        <small class="text-muted">Cant: @item.Cantidad | Costo: $@item.CostoUnitario | Nuevo Venta: $@item.NuevoPrecioVenta</small>
-                                    </div>
-                                    <span class="text-muted">$@(item.Cantidad * item.CostoUnitario)</span>
-                                    <button class="btn btn-sm btn-danger ms-2" @onclick="() => detalles.Remove(item)">X</button>
-                                </li>
+                                var prod = productosCache.FirstOrDefault(p => p.Id == item.ProductoId);
+                                <MudListItem T="EntradaDetalleDto">
+                                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.subtitle1"><strong>@(prod?.Nombre ?? "Producto Desconocido")</strong></MudText>
+                                            <MudText Typo="Typo.body2" Color="Color.Default">
+                                                Cant: @item.Cantidad | Costo: $@item.CostoUnitario | Nuevo Venta: $@item.NuevoPrecioVenta
+                                            </MudText>
+                                        </MudStack>
+                                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                                            <MudText Typo="Typo.subtitle1"><strong>$@(item.Cantidad * item.CostoUnitario)</strong></MudText>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => detalles.Remove(item)" />
+                                        </MudStack>
+                                    </MudStack>
+                                </MudListItem>
+                                <MudDivider />
                             }
-                        </ul>
+                        </MudList>
 
-                        <div class="d-flex justify-content-between mb-3">
-                            <strong>Total Inversión:</strong>
-                            <strong>$@detalles.Sum(i => i.Cantidad * i.CostoUnitario)</strong>
-                        </div>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-4 mt-2">
+                            <MudText Typo="Typo.h6"><strong>Total Inversión:</strong></MudText>
+                            <MudText Typo="Typo.h6"><strong>$@detalles.Sum(i => i.Cantidad * i.CostoUnitario)</strong></MudText>
+                        </MudStack>
 
-                        <button class="btn btn-success w-100" @onclick="RegistrarEntradaMercaderia">
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" OnClick="RegistrarEntradaMercaderia">
                             Confirmar Ingreso de Stock
-                        </button>
+                        </MudButton>
                     }
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
-    private List<ProductoModel>? productos;
+    // Caché ligero: ya no guardamos los 10,000 productos, solo los que buscamos y seleccionamos
+    private List<ProductoModel> productosCache = new(); 
+    
     private string proveedor = string.Empty;
     private int selectedProductoId;
     private int cantidad = 1;
@@ -185,34 +169,40 @@
     private string mensajeExito = string.Empty;
     private string mensajeError = string.Empty;
 
-    protected override async Task OnInitializedAsync()
+    // Método que MudAutocomplete llama automáticamente al escribir
+    private async Task<IEnumerable<ProductoModel>> BuscarProductosEnApi(string value, CancellationToken token)
     {
-        await CargarProductos();
-    }
+        if (string.IsNullOrWhiteSpace(value))
+            return new List<ProductoModel>();
 
-    private async Task CargarProductos()
-    {
         try
         {
-            productos = await Http.GetFromJsonAsync<List<ProductoModel>>("api/Productos");
+            var response = await Http.GetFromJsonAsync<List<ProductoModel>>($"api/Productos/buscar?filtro={Uri.EscapeDataString(value)}", token);
+            return response ?? new List<ProductoModel>();
         }
         catch
         {
-            mensajeError = "No se pudieron cargar los productos desde la API.";
+            return new List<ProductoModel>();
         }
     }
 
-    private void OnProductoSeleccionado(ChangeEventArgs e)
+    // Método adaptado para recibir el objeto producto completo desde MudAutocomplete
+    private void OnProductoSeleccionado(ProductoModel? prod)
     {
-        if (int.TryParse(e.Value?.ToString(), out int id))
+        if (prod != null)
         {
-            selectedProductoId = id;
-            var prod = productos?.FirstOrDefault(p => p.Id == id);
-            if (prod != null)
+            selectedProductoId = prod.Id;
+            costoUnitario = prod.PrecioCosto;
+            nuevoPrecioVentaItem = prod.PrecioVenta;
+
+            if (!productosCache.Any(p => p.Id == prod.Id))
             {
-                costoUnitario = prod.PrecioCosto;
-                nuevoPrecioVentaItem = prod.PrecioVenta;
+                productosCache.Add(prod);
             }
+        }
+        else
+        {
+            selectedProductoId = 0;
         }
     }
 
@@ -250,13 +240,14 @@
             if (response.IsSuccessStatusCode)
             {
                 var productoCreado = await response.Content.ReadFromJsonAsync<ProductoModel>();
-                await CargarProductos();
 
                 if (productoCreado != null)
                 {
                     selectedProductoId = productoCreado.Id;
                     costoUnitario = nuevoPrecioCosto;
                     nuevoPrecioVentaItem = nuevoPrecioVenta;
+                    
+                    productosCache.Add(productoCreado);
                 }
 
                 mostrarFormNuevoProducto = false;
@@ -357,7 +348,6 @@
                 mensajeExito = "¡Entrada de mercadería registrada y stock actualizado correctamente!";
                 proveedor = string.Empty;
                 detalles.Clear();
-                await CargarProductos();
             }
             else
             {
