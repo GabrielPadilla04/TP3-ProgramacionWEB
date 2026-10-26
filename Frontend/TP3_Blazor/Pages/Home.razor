@@ -1,7 +1,101 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Inicio - Sistema POS</PageTitle>
 
-<h1>Hello, world!</h1>
+<AuthorizeView>
+    <!-- VISTA PÚBLICA (Sin loguear) -->
+    <NotAuthorized>
+        <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16 text-center">
+            <MudStack AlignItems="AlignItems.Center" Spacing="6">
+                <MudIcon Icon="@Icons.Material.Filled.Storefront" Color="Color.Primary" Style="font-size: 100px;" />
 
-Welcome to your new app.
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.h3" Color="Color.Primary" Style="font-weight: bold;">Gestión POS</MudText>
+                    <MudText Typo="Typo.h5" Color="Color.Secondary">Sistema de Ventas y Control de Stock</MudText>
+                </MudStack>
+
+                <MudText Typo="Typo.body1" Class="mt-2 mb-4">
+                    Bienvenido al sistema central. El acceso está restringido exclusivamente al personal autorizado.
+                </MudText>
+
+                <MudGrid Justify="Justify.Center">
+                    <MudItem xs="12" sm="6">
+                        <MudButton Href="login" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth="true" StartIcon="@Icons.Material.Filled.Login">
+                            Iniciar Sesión
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudButton Href="register" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large" FullWidth="true" StartIcon="@Icons.Material.Filled.PersonAdd">
+                            Crear Cuenta
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudStack>
+        </MudContainer>
+    </NotAuthorized>
+
+    <!-- VISTA PRIVADA (Usuario logueado) -->
+    <Authorized>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+            <MudText Typo="Typo.h4" Class="mb-2">¡Hola, @(context.User.Identity?.Name ?? "equipo")!</MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-8">Es un excelente día para vender. ¿Qué necesitás hacer hoy?</MudText>
+
+            <MudGrid>
+                <!-- Atajo para Todos los Usuarios Logueados (Vendedores y Admins) -->
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Elevation="4" Class="h-100 hover-effect">
+                        <MudCardContent Class="text-center pa-6">
+                            <MudIcon Icon="@Icons.Material.Filled.PointOfSale" Color="Color.Success" Style="font-size: 64px;" Class="mb-4" />
+                            <MudText Typo="Typo.h5" Class="mb-2">Caja (POS)</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Default">Abrir el punto de venta para procesar pedidos y facturar a clientes.</MudText>
+                        </MudCardContent>
+                        <MudCardActions Class="justify-center pb-4">
+                            <MudButton Href="pos" Variant="Variant.Filled" Color="Color.Success">Ir a la Caja</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+
+                <!-- Atajos Exclusivos para el Administrador -->
+                <AuthorizeView Roles="Administrador" Context="adminContext">
+                    <Authorized>
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudCard Elevation="4" Class="h-100 hover-effect">
+                                <MudCardContent Class="text-center pa-6">
+                                    <MudIcon Icon="@Icons.Material.Filled.Inventory" Color="Color.Primary" Style="font-size: 64px;" Class="mb-4" />
+                                    <MudText Typo="Typo.h5" Class="mb-2">Ingreso de Stock</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Default">Registrar nuevas entradas de mercadería y actualizar el inventario.</MudText>
+                                </MudCardContent>
+                                <MudCardActions Class="justify-center pb-4">
+                                    <MudButton Href="ingreso-mercaderia" Variant="Variant.Outlined" Color="Color.Primary">Gestionar Stock</MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudCard Elevation="4" Class="h-100 hover-effect">
+                                <MudCardContent Class="text-center pa-6">
+                                    <MudIcon Icon="@Icons.Material.Filled.Dashboard" Color="Color.Warning" Style="font-size: 64px;" Class="mb-4" />
+                                    <MudText Typo="Typo.h5" Class="mb-2">Administración</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Default">Ver reportes consolidados, auditorías y descargar informes en PDF.</MudText>
+                                </MudCardContent>
+                                <MudCardActions Class="justify-center pb-4">
+                                    <MudButton Href="admin/administracion" Variant="Variant.Outlined" Color="Color.Warning">Panel General</MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                    </Authorized>
+                </AuthorizeView>
+            </MudGrid>
+        </MudContainer>
+
+        <style>
+                    .hover-effect {
+                        transition: transform 0.2s ease-in-out;
+                    }
+
+                        .hover-effect:hover {
+                            transform: scale(1.03);
+                        }
+        </style>
+    </Authorized>
+</AuthorizeView>

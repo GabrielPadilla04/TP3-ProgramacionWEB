@@ -1,65 +1,30 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">TP3_Blazor</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
+﻿<MudNavMenu>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+        Home
+    </MudNavLink>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+    <MudNavLink Href="register" Icon="@Icons.Material.Filled.PersonAdd">
+        Registrarse
+    </MudNavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="register">
-                <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> Registrarse
-            </NavLink>
-        </div>
+    <MudNavLink Href="login" Icon="@Icons.Material.Filled.Lock">
+        Iniciar Sesión
+    </MudNavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="login">
-                <span class="bi bi-lock-fill-nav-menu" aria-hidden="true"></span> Iniciar Sesión
-            </NavLink>
-        </div>
+    <MudNavLink Href="pos" Icon="@Icons.Material.Filled.PointOfSale">
+        POS (Ventas)
+    </MudNavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="pos">
-                <span class="bi bi-cart-fill-nav-menu" aria-hidden="true"></span> POS (Ventas)
-            </NavLink>
-        </div>
-        <AuthorizeView Roles="Administrador">
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="admin/administracion">
-                        <span class="bi bi-speedometer2-nav-menu" aria-hidden="true"></span> Panel de Administración
-                    </NavLink>
-                </div>
-            </Authorized>
-        </AuthorizeView>
-        <AuthorizeView Roles="Administrador">
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="ingreso-mercaderia">
-                        <span class="bi bi-box-seam-nav-menu" aria-hidden="true"></span> Ingreso de Mercadería
-                    </NavLink>
-                </div>
-            </Authorized>
-        </AuthorizeView>
-    </nav>
-</div>
+    <!-- Opciones exclusivas para Administradores -->
+    <AuthorizeView Roles="Administrador">
+        <Authorized>
+            <MudNavLink Href="admin/administracion" Icon="@Icons.Material.Filled.Dashboard">
+                Panel de Administración
+            </MudNavLink>
 
-@code {
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-}
+            <MudNavLink Href="ingreso-mercaderia" Icon="@Icons.Material.Filled.Inventory">
+                Ingreso de Mercadería
+            </MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+</MudNavMenu>

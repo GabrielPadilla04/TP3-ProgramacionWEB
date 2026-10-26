@@ -3,36 +3,55 @@
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)">
                 <NotAuthorized>
-                    @if (!context.User.Identity?.IsAuthenticated ?? true)
-                    {
-                        <div class="container mt-5 text-center">
-                            <div class="alert alert-warning" role="alert">
-                                <h4>Acceso Restringido</h4>
-                                <p>Debes iniciar sesión para poder acceder a esta sección.</p>
-                                <a href="login" class="btn btn-primary mt-2">Ir al Login</a>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="container mt-5">
-                            <div class="alert alert-danger" role="alert">
-                                <h4>Acceso Denegado</h4>
-                                <p>No tenés los permisos necesarios (roles) para ver esta página.</p>
-                            </div>
-                        </div>
-                    }
+                    <LayoutView Layout="@typeof(Layout.MainLayout)">
+                        @if (!context.User.Identity?.IsAuthenticated ?? true)
+                        {
+                            <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16 text-center">
+                                <MudStack AlignItems="AlignItems.Center" Spacing="4">
+                                    <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Warning" Style="font-size: 100px;" />
+                                    <MudText Typo="Typo.h4" Color="Color.Warning" Style="font-weight: bold;">Acceso Restringido</MudText>
+                                    <MudText Typo="Typo.body1">Debes iniciar sesión para poder acceder a esta sección.</MudText>
+                                    <MudButton Href="login" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Class="mt-4">
+                                        Ir al Login
+                                    </MudButton>
+                                </MudStack>
+                            </MudContainer>
+                        }
+                        else
+                        {
+                            <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16 text-center">
+                                <MudStack AlignItems="AlignItems.Center" Spacing="4">
+                                    <MudIcon Icon="@Icons.Material.Filled.GppBad" Color="Color.Error" Style="font-size: 100px;" />
+                                    <MudText Typo="Typo.h4" Color="Color.Error" Style="font-weight: bold;">Acceso Denegado</MudText>
+                                    <MudText Typo="Typo.body1">No tenés los permisos necesarios (roles) para ver esta página.</MudText>
+                                    <MudButton Href="/" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large" Class="mt-4">
+                                        Volver al Inicio
+                                    </MudButton>
+                                </MudStack>
+                            </MudContainer>
+                        }
+                    </LayoutView>
                 </NotAuthorized>
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
         </Found>
+
         <NotFound>
-            <PageTitle>No encontrado</PageTitle>
+            <PageTitle>Página no encontrada - POS</PageTitle>
             <LayoutView Layout="@typeof(Layout.MainLayout)">
-                <div class="container mt-5 text-center">
-                    <h3>Página no encontrada</h3>
-                    <p>La dirección a la que intentás ingresar no existe.</p>
-                </div>
+                <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16 text-center">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="4">
+                        <MudIcon Icon="@Icons.Material.Filled.SmsFailed" Color="Color.Error" Style="font-size: 120px;" />
+                        <MudText Typo="Typo.h2" Color="Color.Primary" Style="font-weight: bold;">404</MudText>
+                        <MudText Typo="Typo.h5">¡Oops! Parece que te perdiste.</MudText>
+                        <MudText Typo="Typo.body1" Color="Color.Default">
+                            La página a la que intentas acceder no existe, fue eliminada o no tienes los permisos necesarios para verla.
+                        </MudText>
+                        <MudButton Href="/" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" StartIcon="@Icons.Material.Filled.Home" Class="mt-4">
+                            Volver al Panel Principal
+                        </MudButton>
+                    </MudStack>
+                </MudContainer>
             </LayoutView>
         </NotFound>
     </Router>

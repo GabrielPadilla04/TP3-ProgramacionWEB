@@ -4,52 +4,49 @@
 
 <PageTitle>Ingreso de Mercadería</PageTitle>
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h3 class="card-title mb-4">Registrar Entrada de Mercadería</h3>
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    <MudCard Elevation="4">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5" Color="Color.Primary">Registrar Entrada de Mercadería</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            @if (!string.IsNullOrEmpty(mensajeExito))
+            {
+                <MudAlert Severity="Severity.Success" ShowCloseIcon="true" CloseIconClicked="() => mensajeExito = string.Empty" Class="mb-4">
+                    @mensajeExito
+                </MudAlert>
+            }
 
-                    @if (!string.IsNullOrEmpty(mensajeExito))
+            @if (!string.IsNullOrEmpty(mensajeError))
+            {
+                <MudAlert Severity="Severity.Error" ShowCloseIcon="true" CloseIconClicked="() => mensajeError = string.Empty" Class="mb-4">
+                    @mensajeError
+                </MudAlert>
+            }
+
+            <MudSelect T="int" @bind-Value="entradaModel.ProductoId" Label="Seleccionar Producto" Variant="Variant.Outlined" Class="mb-4" AnchorOrigin="Origin.BottomCenter">
+                <MudSelectItem Value="0">-- Seleccione un producto --</MudSelectItem>
+                @if (products != null)
+                {
+                    @foreach (var p in products)
                     {
-                        <div class="alert alert-success">@mensajeExito</div>
+                        <MudSelectItem Value="@p.Id">@p.Name (Stock actual: @p.Stock)</MudSelectItem>
                     }
+                }
+            </MudSelect>
 
-                    @if (!string.IsNullOrEmpty(mensajeError))
-                    {
-                        <div class="alert alert-danger">@mensajeError</div>
-                    }
+            <MudNumericField @bind-Value="entradaModel.Cantidad" Label="Cantidad a Ingresar" Variant="Variant.Outlined" Min="1" Class="mb-4" />
 
-                    <EditForm Model="entradaModel" OnValidSubmit="RegistrarEntrada">
-                        <DataAnnotationsValidator />
+            <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" Size="Size.Large" OnClick="RegistrarEntrada">
+                Guardar Entrada
+            </MudButton>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
 
-                        <div class="mb-3">
-                            <label class="form-label">Seleccionar Producto</label>
-                            <InputSelect class="form-select" @bind-Value="entradaModel.ProductoId">
-                                <option value="0">-- Seleccione un producto --</option>
-                                @if (products != null)
-                                {
-                                    @foreach (var p in products)
-                                    {
-                                        <option value="@p.Id">@p.Name (Stock actual: @p.Stock)</option>
-                                    }
-                                }
-                            </InputSelect>
-                        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Cantidad a Ingresar</label>
-                            <InputNumber class="form-control" @bind-Value="entradaModel.Cantidad" />
-                        </div>
-
-                        <button type="submit" class="btn btn-success w-100">Guardar Entrada</button>
-                    </EditForm>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 @code {
     private EntradaStockModel entradaModel = new();
@@ -63,7 +60,7 @@
         {
             products = await Http.GetFromJsonAsync<List<ProductModel>>("api/Products");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             mensajeError = "No se pudo cargar el listado de productos.";
         }
@@ -88,6 +85,7 @@
             {
                 mensajeExito = "¡Entrada de mercadería registrada correctamente y stock actualizado!";
                 entradaModel = new(); // Limpiar formulario
+
                 // Recargar productos para refrescar el stock visualizado
                 products = await Http.GetFromJsonAsync<List<ProductModel>>("api/Products");
             }

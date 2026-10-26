@@ -4,109 +4,116 @@
 
 <PageTitle>Punto de Venta - POS</PageTitle>
 
-<div class="container-fluid mt-4">
-    <div class="row">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudGrid>
         <!-- SECCIÓN IZQUIERDA: Catálogo de Productos -->
-        <div class="col-md-8">
-            <h3 class="mb-3">Catálogo de Productos</h3>
+        <MudItem xs="12" md="8">
+            <MudText Typo="Typo.h5" Class="mb-4">Catálogo de Productos</MudText>
 
             @if (!string.IsNullOrEmpty(mensajeError))
             {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <MudAlert Severity="Severity.Error" ShowCloseIcon="true" CloseIconClicked="() => mensajeError = string.Empty" Class="mb-3">
                     @mensajeError
-                    <button type="button" class="btn-close" @onclick="() => mensajeError = string.Empty"></button>
-                </div>
+                </MudAlert>
             }
 
             @if (!string.IsNullOrEmpty(mensajeExito))
             {
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <MudAlert Severity="Severity.Success" ShowCloseIcon="true" CloseIconClicked="() => mensajeExito = string.Empty" Class="mb-3">
                     @mensajeExito
-                    <button type="button" class="btn-close" @onclick="() => mensajeExito = string.Empty"></button>
-                </div>
+                </MudAlert>
             }
 
             @if (products == null)
             {
-                <p><em>Cargando productos...</em></p>
+                <MudText Typo="Typo.body1" Style="font-style: italic;">Cargando productos...</MudText>
             }
             else if (!products.Where(p => p.StockActual > 0).Any())
             {
-                <div class="alert alert-info">No hay productos disponibles en este momento.</div>
+                <MudAlert Severity="Severity.Info">No hay productos disponibles en este momento.</MudAlert>
             }
             else
             {
-                <div class="row">
+                <MudGrid>
                     @foreach (var product in products.Where(p => p.StockActual > 0))
                     {
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100 shadow-sm">
-                                <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title">@product.Nombre</h5>
-                                    <p class="card-text text-muted mb-1">Precio: $@product.PrecioVenta</p>
-                                    <p class="card-text small">Stock: @product.StockActual</p>
-                                    <button class="btn btn-outline-primary mt-auto" @onclick="() => AddToCart(product)">
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudCard Elevation="3" Class="h-100 d-flex flex-column">
+                                <MudCardContent Class="flex-grow-1">
+                                    <MudText Typo="Typo.h6">@product.Nombre</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-1">Precio: $@product.PrecioVenta</MudText>
+                                    <MudText Typo="Typo.caption">Stock: @product.StockActual</MudText>
+                                </MudCardContent>
+                                <MudCardActions>
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true" OnClick="() => AddToCart(product)">
                                         Agregar al Carrito
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                                    </MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
                     }
-                </div>
+                </MudGrid>
             }
-        </div>
+        </MudItem>
 
         <!-- SECCIÓN DERECHA: Carrito de Compras / Ticket -->
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h4 class="card-title mb-3">Carrito Actual</h4>
+        <MudItem xs="12" md="4">
+            <MudCard Elevation="3">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Class="mb-4">Carrito Actual</MudText>
 
                     @if (!cart.Any())
                     {
-                        <p class="text-muted">El carrito está vacío.</p>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">El carrito está vacío.</MudText>
                     }
                     else
                     {
-                        <ul class="list-group mb-3">
+                        <MudList T="CartItem" Class="mb-3">
                             @foreach (var item in cart)
                             {
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="my-0">@item.Product.Nombre</h6>
-                                        <small class="text-muted">Cant: @item.Quantity x $@item.Product.PrecioVenta</small>
-                                    </div>
-                                    <span class="text-muted">$@(item.Product.PrecioVenta * item.Quantity)</span>
-                                    <button class="btn btn-sm btn-danger ms-2" @onclick="() => RemoveFromCart(item)">X</button>
-                                </li>
+                                <MudListItem T="CartItem" Class="px-0">
+                                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.subtitle2">@item.Product.Nombre</MudText>
+                                            <MudText Typo="Typo.body2" Color="Color.Secondary">Cant: @item.Quantity x $@item.Product.PrecioVenta</MudText>
+                                        </MudStack>
+                                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                                            <MudText Typo="Typo.subtitle2">$@(item.Product.PrecioVenta * item.Quantity)</MudText>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => RemoveFromCart(item)" />
+                                        </MudStack>
+                                    </MudStack>
+                                </MudListItem>
+                                <MudDivider />
                             }
-                        </ul>
+                        </MudList>
 
-                        <div class="d-flex justify-content-between mb-3">
-                            <strong>Total:</strong>
-                            <strong>$@cart.Sum(i => i.Product.PrecioVenta * i.Quantity)</strong>
-                        </div>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-4 mt-4">
+                            <MudText Typo="Typo.h6"><strong>Total:</strong></MudText>
+                            <MudText Typo="Typo.h6"><strong>$@cart.Sum(i => i.Product.PrecioVenta * i.Quantity)</strong></MudText>
+                        </MudStack>
 
-                        <!-- PROTECCIÓN CONDICIONAL: Permite navegar el POS pero restringe la compra si no está logueado -->
+                        <!-- PROTECCIÓN CONDICIONAL -->
                         <AuthorizeView>
                             <Authorized>
-                                <button class="btn btn-success w-100" @onclick="Checkout">
+                                <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" Size="Size.Large" OnClick="Checkout">
                                     Completar Venta
-                                </button>
+                                </MudButton>
                             </Authorized>
                             <NotAuthorized>
-                                <div class="alert alert-warning text-center mb-0 p-2">
-                                    <p class="small mb-2">🔒 Debes iniciar sesión para poder completar la venta.</p>
-                                    <a href="login" class="btn btn-primary btn-sm w-100">Ir a Iniciar Sesión</a>
-                                </div>
+                                <MudAlert Severity="Severity.Warning" Class="mb-0 text-center" ContentAlignment="HorizontalAlignment.Center">
+                                    <MudText Typo="Typo.body2" Class="mb-2">🔒 Debes iniciar sesión para poder completar la venta.</MudText>
+                                    <MudButton Href="login" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" FullWidth="true">
+                                        Ir a Iniciar Sesión
+                                    </MudButton>
+                                </MudAlert>
                             </NotAuthorized>
                         </AuthorizeView>
                     }
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
     private List<ProductModel>? products;
