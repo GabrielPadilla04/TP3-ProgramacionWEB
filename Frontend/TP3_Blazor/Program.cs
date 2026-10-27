@@ -16,7 +16,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped<AuthService>();
 
 // Configuramos el HttpClient para que apunte directamente a la API en el puerto 5126
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:5126/") });
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("[https://apitp3web.runasp.net/](https://apitp3web.runasp.net/)") });
 
 // Agregamos el soporte para LocalStorage (guardar el token JWT en el navegador)
 builder.Services.AddBlazoredLocalStorage();
