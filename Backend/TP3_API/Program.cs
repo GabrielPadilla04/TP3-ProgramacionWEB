@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Text;
@@ -16,7 +17,10 @@ builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+
+// ** SWAGGER CLÁSICO **
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 // Configuración de Entity Framework Core con MariaDB
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -38,19 +42,19 @@ builder.Services.AddCors(options =>
 
 // 2. Configurar Autenticación JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "ClaveSecretaSuperSeguraTP3_2026!ConSuficienteLongitud12345"))
-        };
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "ClaveSecretaSuperSeguraTP3_2026!ConSuficienteLongitud12345"))
+    };
+});
 
 builder.Services.AddAuthorization();
 
@@ -59,16 +63,18 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "TP3_API v1");
+        c.RoutePrefix = string.Empty; // Hace que Swagger abra directamente en la raíz (https://localhost:5126/)
+    });
 }
 
 app.UseHttpsRedirection();
 
 // ** Activar la política de CORS **
 app.UseCors("AllowBlazorApp");
-
-// ** NUEVO: Middleware global de auditoría, manejo de errores y persistencia en base de datos **
-app.UseMiddleware<TP3_API.Middlewares.AuditoriaMiddleware>();
 
 // 3. Middlewares de Seguridad
 app.UseAuthentication();
@@ -84,13 +90,19 @@ var summaries = new[]
 
 app.MapGet("/weatherforecast", () =>
 {
-    // Forzamos un error controlado para probar el middleware
-    throw new Exception("¡Prueba de fuego del sistema de auditoría y logs!");
+    var forecast = Enumerable.Range(1, 5).Select(index =>
+    new WeatherForecast
+    (
+        DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+        Random.Shared.Next(-20, 55),
+        summaries[Random.Shared.Next(summaries.Length)]
+    ))
+    .ToArray();
+    return forecast;
+})
+.WithName("GetWeatherForecast");
 
-    // (El resto del código de weatherforecast queda abajo sin ejecutarse por ahora)
-});
-
-// 5. Ejecutar la app envuelta en un bloque Try-Catch con Serilog
+// 5. Ejecutar la app
 try
 {
     Log.Information("Iniciando la API del Trabajo Práctico...");
