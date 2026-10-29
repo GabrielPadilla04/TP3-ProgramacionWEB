@@ -8,6 +8,8 @@ Sistema Integral de Punto de Venta (POS) desarrollado con **ASP.NET Core Web API
 * **Gabriel Padilla**
 * **Valentin Montes**
 
+### Pagina en funcionamiento https://frontp3web.runasp.net/
+
 ---
 Paso a Paso para Ejecutar el Sistema
 Prerrequisitos previos
