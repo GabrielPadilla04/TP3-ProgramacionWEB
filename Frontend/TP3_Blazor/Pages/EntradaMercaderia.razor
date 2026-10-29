@@ -38,20 +38,26 @@
 
                     @if (!mostrarFormNuevoProducto)
                     {
-                        <!-- MODO SELECCIÓN CON AUTOCOMPLETADO -->
+                        <!-- MODO SELECCIÓN CON SELECT DESPLEGABLE -->
                         <MudText Typo="Typo.h6" Class="mb-3">Agregar Producto al Ingreso</MudText>
 
-                        <MudAutocomplete T="ProductoModel" 
-                                         Label="Buscar Producto (Nombre o Código)" 
-                                         SearchFunc="BuscarProductosEnApi" 
-                                         ToStringFunc="@(p => p == null ? null : $"{p.Nombre} (Stock: {p.StockActual} | Venta: ${p.PrecioVenta})")"
-                                         ValueChanged="OnProductoSeleccionado" 
-                                         Variant="Variant.Outlined" 
-                                         Class="mb-3"
-                                         Placeholder="Escribe para buscar..."
-                                         ResetValueOnEmptyText="true" 
-                                         CoerceText="true" 
-                                         CoerceValue="false" />
+                        <MudSelect T="int"
+                                   Label="Seleccionar Producto"
+                                   Value="selectedProductoId"
+                                   ValueChanged="OnProductoSeleccionadoId"
+                                   Variant="Variant.Outlined"
+                                   Class="mb-3"
+                                   AnchorOrigin="Origin.BottomCenter"
+                                   TransformOrigin="Origin.TopCenter"
+                                   PopoverClass="pa-2"
+                                   MaxHeight="300"
+                                   Clearable="true">
+                            <MudSelectItem Value="0" Disabled="true">-- Seleccione un producto --</MudSelectItem>
+                            @foreach (var prod in productosCache)
+                            {
+                                <MudSelectItem Value="@prod.Id">@prod.Nombre (Stock: @prod.StockActual | Venta: $@prod.PrecioVenta)</MudSelectItem>
+                            }
+                        </MudSelect>
 
                         <MudNumericField @bind-Value="cantidad" Label="Cantidad a ingresar" Min="1" Variant="Variant.Outlined" Class="mb-3" />
 
@@ -75,7 +81,7 @@
                             <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-3">Nuevo Producto en el Catálogo</MudText>
 
                             <MudTextField @bind-Value="nuevoCodigoBarras" Label="Código de Barras" Placeholder="Ej: 779..." Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-2" />
-                            
+
                             <MudTextField @bind-Value="nuevoNombre" Label="Nombre del Producto" Placeholder="Ej: Gaseosa Lima 2L" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-2" />
 
                             <MudGrid>
@@ -148,11 +154,10 @@
 </MudContainer>
 
 @code {
-    // Caché ligero: ya no guardamos los 10,000 productos, solo los que buscamos y seleccionamos
-    private List<ProductoModel> productosCache = new(); 
-    
+    private List<ProductoModel> productosCache = new();
+
     private string proveedor = string.Empty;
-    private int selectedProductoId;
+    private int selectedProductoId = 0;
     private int cantidad = 1;
     private decimal costoUnitario = 0;
     private decimal nuevoPrecioVentaItem = 0;
@@ -169,40 +174,38 @@
     private string mensajeExito = string.Empty;
     private string mensajeError = string.Empty;
 
-    // Método que MudAutocomplete llama automáticamente al escribir
-    private async Task<IEnumerable<ProductoModel>> BuscarProductosEnApi(string value, CancellationToken token)
+    // Cargar todos los productos al iniciar la página
+    protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrWhiteSpace(value))
-            return new List<ProductoModel>();
+        await CargarProductos();
+    }
 
+    private async Task CargarProductos()
+    {
         try
         {
-            var response = await Http.GetFromJsonAsync<List<ProductoModel>>($"api/Productos/buscar?filtro={Uri.EscapeDataString(value)}", token);
-            return response ?? new List<ProductoModel>();
+            var response = await Http.GetFromJsonAsync<List<ProductoModel>>("api/Productos");
+            productosCache = response ?? new List<ProductoModel>();
         }
         catch
         {
-            return new List<ProductoModel>();
+            productosCache = new List<ProductoModel>();
         }
     }
 
-    // Método adaptado para recibir el objeto producto completo desde MudAutocomplete
-    private void OnProductoSeleccionado(ProductoModel? prod)
+    private void OnProductoSeleccionadoId(int id)
     {
+        selectedProductoId = id;
+        var prod = productosCache.FirstOrDefault(p => p.Id == id);
         if (prod != null)
         {
-            selectedProductoId = prod.Id;
             costoUnitario = prod.PrecioCosto;
             nuevoPrecioVentaItem = prod.PrecioVenta;
-
-            if (!productosCache.Any(p => p.Id == prod.Id))
-            {
-                productosCache.Add(prod);
-            }
         }
         else
         {
-            selectedProductoId = 0;
+            costoUnitario = 0;
+            nuevoPrecioVentaItem = 0;
         }
     }
 
@@ -243,11 +246,8 @@
 
                 if (productoCreado != null)
                 {
-                    selectedProductoId = productoCreado.Id;
-                    costoUnitario = nuevoPrecioCosto;
-                    nuevoPrecioVentaItem = nuevoPrecioVenta;
-                    
                     productosCache.Add(productoCreado);
+                    OnProductoSeleccionadoId(productoCreado.Id);
                 }
 
                 mostrarFormNuevoProducto = false;
@@ -348,6 +348,7 @@
                 mensajeExito = "¡Entrada de mercadería registrada y stock actualizado correctamente!";
                 proveedor = string.Empty;
                 detalles.Clear();
+                await CargarProductos(); // Refrescar stock general
             }
             else
             {

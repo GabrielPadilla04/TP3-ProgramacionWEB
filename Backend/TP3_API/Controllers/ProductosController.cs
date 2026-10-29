@@ -25,17 +25,17 @@ namespace TP3_API.Controllers
             return await _context.Productos.ToListAsync();
         }
 
-        
+
         [HttpGet("buscar")]
         [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<Producto>>> BuscarProductos([FromQuery] string filtro)
+        public async Task<ActionResult<IEnumerable<Producto>>> BuscarProductos([FromQuery] string? filtro) // <-- Agregá el '?' aquí
         {
             if (string.IsNullOrWhiteSpace(filtro))
                 return Ok(new List<Producto>());
 
             var productos = await _context.Productos
                 .Where(p => p.Nombre.Contains(filtro) || p.CodigoBarras.Contains(filtro))
-                .Take(15) // Limitamos a 15 para que la búsqueda sea rápida
+                .Take(15)
                 .ToListAsync();
 
             return Ok(productos);
