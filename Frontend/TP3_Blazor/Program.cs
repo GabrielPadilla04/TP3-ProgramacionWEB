@@ -15,9 +15,11 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 // Registrar servicios a consumir en la aplicación Blazor WebAssembly
 builder.Services.AddScoped<AuthService>();
 
-//cambio de la url de la api para que apunte a la url del servidor donde se encuentra desplegada la api
-// Configuramos el HttpClient para que apunte directamente a la API en el puerto 5126
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://apitp3web.runasp.net/") });
+// La URL de la API se lee de wwwroot/appsettings.json (local) o appsettings.Production.json (servidor)
+var apiUrl = builder.Configuration["ApiUrl"]
+    ?? throw new InvalidOperationException("Falta 'ApiUrl' en appsettings.json");
+
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiUrl) });
 
 // Agregamos el soporte para LocalStorage (guardar el token JWT en el navegador)
 builder.Services.AddBlazoredLocalStorage();
